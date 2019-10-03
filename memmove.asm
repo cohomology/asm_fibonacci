@@ -1,3 +1,4 @@
+;; (c) by cohomology, 2019
 global _memmove16
 
 ;; Moves a portion of memory _downwards_ in 16 byte steps
