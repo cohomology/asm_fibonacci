@@ -1,3 +1,4 @@
+;; (c) by cohomology, 2019. 
 struc number
   .address: resq 1          ; address of number in memory (8 byte)
                             ; this points 1 byte after the _end_ of number

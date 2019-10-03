@@ -1,3 +1,4 @@
+;; (c) by cohomology, 2019. 
 ;; Prints all fibonacci numbers on the console, as long as 
 ;; process memory is available.
 ;; Design goals: - Follow x86_64/amd64 Linux ABI
@@ -31,8 +32,8 @@ section .data                                                          ; data se
   newline: db `\n`
   no_memory_text: db "No more memory, quit."
   no_memory_text_ln: equ $-no_memory_text
-  block_size: equ 16
-  number_max_size: dd (block_size / 2)
+  block_size: dd 32
+  number_max_size: dd 16
   number_old_max_size: dd 0
 
 section	.text                                                          ; text (=code) section
@@ -46,7 +47,8 @@ _start:   ;; get end of data segment into %rax
           mov [qword initial_break], rax
           ;; allocate initial memory 
           mov rdi, rax
-          add rdi, block_size
+          mov esi, dword [block_size]
+          add rdi, rsi
           mov eax, 0xc
           syscall 
           cmp rax, rdi

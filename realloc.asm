@@ -1,3 +1,4 @@
+;; (c) by cohomology, 2019. 
 bits 64
 
 global _realloc
@@ -15,6 +16,8 @@ extern divider_address, old_divider_address
 ;; old_break := current_break                                     ;;
 ;; current_break := old_break                                     ;;
 ;; Here new_break := old_break + block_size                       ;;
+;; The block size is doubled every call of this function and is   ;;
+;; initially 32 bytes.
 ;; This function also computes a distance "number_max_size"       ;;
 ;; such that number_max_size = (new_break - initial_break)/2      ;;
 ;; It stores the previous number_max_size value in the global     ;;
@@ -23,9 +26,13 @@ extern divider_address, old_divider_address
 ;; initial_break+number_max_size                                  ;;
 ;; Parameters and return value: None (works with global vars)     ;;
 ;; ---------------------------------------------------------------;;
-realloc_brk: mov eax, 0xc              ; syscall brk()
+realloc_brk: mov esi, dword [block_size]    ; double block size
+             shl rsi, 1
+             mov dword [block_size], esi
+
+             mov eax, 0xc              ; syscall brk()
              mov rdi, [current_break]  ; new_break := old_break + block_size
-             add rdi, block_size
+             add rdi, rsi
              syscall                   ; brk(current_break + block_size)
              cmp rax, rdi              ; if new_break != expected_new_break
              jne _no_mem               ;   goto error 

@@ -9,6 +9,6 @@ _memmove16: sub rdi, 0x10
             sub rdx, 0x10 
             movdqa xmm0, [rdi]
             movdqa [rdx], xmm0 
-            test ecx, ecx
+            test esi, esi
             jne _memmove16 
             ret
