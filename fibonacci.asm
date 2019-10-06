@@ -38,22 +38,23 @@ section .data                                                          ; data se
 
 section	.text                                                          ; text (=code) section
 
-_start:   ;; get end of data segment into %rax 
-          mov eax, 0xc 
-          xor edi, edi 
-          syscall         ; brk(0)
+_start:   ;; get end of data segment into [initial_break]
+          mov eax, 0xc               ; system call brk(), increase size of data segment
+          xor edi, edi               ; invalid address 0
+          syscall                    ; brk(0)
+          inc rax                    ; $rax points to end of data segment, increase by 1 byte
           mov rdi, rax
-          call algn16_brk ; rax = aligned address
+          call algn16_brk            ; align to 16 bytes by calling brk() again 
           mov [qword initial_break], rax
-          ;; allocate initial memory 
+          ;; allocate initial memory block of [block_size] bytes 
           mov rdi, rax
           mov esi, dword [block_size]
           add rdi, rsi
           mov eax, 0xc
-          syscall 
+          syscall                   ; brk([initial break] + [block_size])
           cmp rax, rdi
           jne _no_mem
-          ;; write start values 
+          ;; initialize [number1] and [number2]
           mov [current_break], rax 
           mov [number2 + number.address], rax
           dec rax
@@ -70,6 +71,7 @@ _start:   ;; get end of data segment into %rax
           mov ecx, 1
           mov [number1 + number.length], ecx
           mov [number2 + number.length], ecx
+          ;; print smaller number
           call print
 
 loop:     ; add both numbers 
@@ -135,4 +137,6 @@ algn16_brk:  mov rax, rdi
              mov rdi, 0xc
              xchg rax, rdi
              syscall
+             cmp rax, rdi
+             jne _no_mem 
 algn16_end:  ret
