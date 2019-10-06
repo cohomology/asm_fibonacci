@@ -10,7 +10,15 @@ extern divider_address, old_divider_address
 %include "number.inc"
 
 ;; ---------------------------------------------------------------;;
-;;                   FUNCTION realloc_brk                         ;;
+;;                   FUNCTION _realloc                            ;;
+;; This function allocates new memory to enlarge the size of the  ;;
+;; numbers and copies the old numbers to the new numbers.         ;;
+;; Also some global variables for bookkeeping are set. See in the ;;
+;; above function realloc_brk for a detailled description.        ;;
+;; Parameters and return value: None (works with global vars)     ;;
+;; ---------------------------------------------------------------;;
+_realloc:    
+;; ---------------------------------------------------------------;;
 ;; Given the memory area [initial_break, current_break]           ;;
 ;; this allocates new memory [initial_break, new_break] and sets  ;;
 ;; old_break := current_break                                     ;;
@@ -26,7 +34,7 @@ extern divider_address, old_divider_address
 ;; initial_break+number_max_size                                  ;;
 ;; Parameters and return value: None (works with global vars)     ;;
 ;; ---------------------------------------------------------------;;
-realloc_brk: mov esi, dword [block_size]    ; double block size
+             mov esi, dword [block_size]    ; double block size
              shl rsi, 1
              mov dword [block_size], esi
 
@@ -52,10 +60,20 @@ realloc_brk: mov esi, dword [block_size]    ; double block size
              mov [number_max_size], ecx
              add rcx, [initial_break]
              mov [divider_address], rcx 
-             ret
+
+             ;; copy step
+
+             mov rdi, [old_break]           ;; copy the number with the larger address
+             mov rsi, [number_old_max_size]
+             mov rdx, [current_break]
+             call _memmove16
+             
+             mov rdi, [old_divider_address] ;; copy the number with the smaller address
+             mov rsi, [number_old_max_size]
+             mov rdx, [divider_address]
+             call _memmove16
 
 ;; ---------------------------------------------------------------;;
-;;                  FUNCTION update_num                           ;;
 ;; Updates the addressed inside the structure "number" of the     ;;
 ;; variables "number1" and "number2" to match the newly allocated ;;
 ;; memory.                                                        ;;
@@ -76,28 +94,4 @@ update_num:  mov rsi, [current_break]   ;; save both places at which
              mov [number1+number.address], r8
              mov [number2+number.address], r9
 
-             ret
-
-;; ---------------------------------------------------------------;;
-;;                   FUNCTION _realloc                            ;;
-;; This function allocates new memory to enlarge the size of the  ;;
-;; numbers and copies the old numbers to the new numbers.         ;;
-;; Also some global variables for bookkeeping are set. See in the ;;
-;; above function realloc_brk for a detailled description.        ;;
-;; Parameters and return value: None (works with global vars)     ;;
-;; ---------------------------------------------------------------;;
-_realloc:    call realloc_brk               ;; enlarge memory and set global vars
-
-             mov rdi, [old_break]           ;; copy the number with the larger address
-             mov rsi, [number_old_max_size]
-             mov rdx, [current_break]
-             call _memmove16
-             
-             mov rdi, [old_divider_address] ;; copy the number with the smaller address
-             mov rsi, [number_old_max_size]
-             mov rdx, [divider_address]
-             call _memmove16
-
-             call update_num                ;; update the addressed inside "number1"
-                                            ;; and "number2"
-             ret
+             ret 
